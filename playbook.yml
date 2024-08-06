@@ -1,0 +1,46 @@
+- hosts: all
+  become: yes
+  roles:
+    - role: requirements
+      when: ansible_os_family == "RedHat"
+  tags:
+    - yum-repo
+
+- hosts: all
+  become: yes
+  roles:
+    - { role: docker, when: ansible_os_family == "RedHat" and docker.install }
+  tags:
+    - docker
+
+- hosts: all
+  become: yes
+  roles:
+    - role: kubeadm-requirements
+      when: ansible_os_family == "RedHat"
+  tags:
+    - kubeadm-requirements
+
+- hosts: all
+  become: yes
+  roles:
+    - role: containerio
+      when: ansible_os_family == "RedHat"
+  tags:
+    - containerio
+
+- hosts: all
+  become: yes
+  roles:
+    - role: firewallrules
+      when: ansible_os_family == "RedHat"
+  tags:
+    - firewallrules
+
+- hosts: all
+  become: yes
+  roles:
+    - { role: masters, when: ansible_os_family == "RedHat" }
+  tags:
+    - masters
+

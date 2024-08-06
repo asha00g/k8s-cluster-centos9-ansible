@@ -1,0 +1,21 @@
+---
+- name: Install the containerd.io package
+  command: yum install -y containerd.io
+
+- name: Configure Containerd
+  command: sudo sh -c "containerd config default > /etc/containerd/config.toml"
+
+- name: Set the SystemdCgroup variable to true
+  lineinfile:
+    path: /etc/containerd/config.toml
+    line: "SystemdCgroup = true"
+
+- name: Ensure the containerd.service starts up at boot
+  command: systemctl enable --now containerd.service
+
+- name: Start containerd service
+  command: sudo systemctl start containerd.service
+
+
+
+

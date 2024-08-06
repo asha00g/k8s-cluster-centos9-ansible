@@ -1,0 +1,26 @@
+---
+- name: Add Docker repo on CentOS9
+  command: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+- name: Install Docker on CentOS9
+  command: sudo yum install -y  docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin 
+    #state: latest
+    # update_cache: yes
+
+- name: Create kubernetes config directory
+  file:
+    path: "/etc/docker"
+    state: directory
+
+- name: Start Docker Daemon
+  service:
+    name: docker
+    enabled: yes
+    state: restarted
+    daemon_reload: yes
+
+- name: Download docker-compose
+  command: curl -SL https://github.com/docker/compose/releases/download/v2.29.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+
+- name: Give executable permissions
+  command: chmod +x /usr/local/bin/docker-compose

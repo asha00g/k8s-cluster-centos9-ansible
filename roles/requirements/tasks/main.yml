@@ -1,0 +1,20 @@
+- name: Ensure Chrony is at the latest version
+  command: "yum -y install chrony"
+
+- name: Enable chrony on Centos
+  command: "systemctl enable --now chronyd"
+    
+- name: Install yum-utils
+  become: yes
+  yum:
+    name: ['yum-utils', "unzip"]
+
+- name: Add kubernetes repo
+  yum_repository:
+    name: kubernetes
+    description: kubernetes repo
+    baseurl: https://pkgs.k8s.io/core:/stable:/v1.30/rpm/
+    enabled: 1
+    gpgcheck: 1
+    gpgkey: https://pkgs.k8s.io/core:/stable:/v1.30/rpm/repodata/repomd.xml.key
+    exclude: kubelet kubeadm kubectl cri-tools kubernetes-cni

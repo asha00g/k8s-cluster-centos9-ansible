@@ -1,0 +1,15 @@
+k8s:
+  version: v1.30
+  cluster_name: "test-cluster"
+  token: "lr8z7r.6u3mibktxl23d188"
+  config:
+    copy_to_ansible_host: true
+
+docker:
+  install: true
+  version: 18.09.8
+
+# Create masters
+masters:
+  install: true
+

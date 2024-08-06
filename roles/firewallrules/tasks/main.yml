@@ -1,0 +1,25 @@
+---
+- name: Set firewall rule for K8s API server
+  command: sudo firewall-cmd --zone=public --permanent --add-port=6443/tcp
+
+- name: set firewall rule for etcd server client API
+  command: sudo firewall-cmd --zone=public --permanent --add-port=2379-2380/tcp
+
+- name: set firewall rule for Kubelet API
+  command: sudo firewall-cmd --zone=public --permanent --add-port=10250/tcp
+
+- name: set firewall rule for kube-scheduler
+  command: sudo firewall-cmd --zone=public --permanent --add-port=10251/tcp
+
+- name: set firewall rule for kube-controller-manager
+  command: sudo firewall-cmd --zone=public --permanent --add-port=10252/tcp
+
+- name: set firewall rule for Read-only Kubelet API
+  command: sudo firewall-cmd --zone=public --permanent --add-port=10255/tcp
+
+- name: set firewall rule for
+  command: sudo firewall-cmd --zone=public --permanent --add-port=5473/tcp"
+
+- name: Reload the firewall to apply the changes
+  shell: "sudo firewall-cmd --reload"
+

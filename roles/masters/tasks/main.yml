@@ -1,0 +1,96 @@
+---
+- name: Create kubernetes config directory
+  file:
+    path: "/etc/kubernetes"
+    state: directory
+  register: manifest
+
+- name: Download the Flannel CNI
+  command: curl -O https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+- name: Apply flannel CNI network
+  shell: "kubectl apply -f kube-flannel.yml"
+  environment:
+    KUBECONFIG: /home/.kube/config
+  when: ansible_hostname == 'master' 
+
+- name: reset Kubernetes (just in case)
+  command: kubeadm reset -f
+  register: out
+  args:
+    creates: /etc/kubernetes/admin.conf
+
+- name: kubeadm config images pull
+  command: kubeadm config images pull
+
+- name: Run kubeadm on primary master
+  shell: "kubeadm init --pod-network-cidr=10.244.0.0/16 > cluster.txt"
+  args:
+    creates: /etc/kubernetes/admin.conf
+  when: ansible_hostname == 'master'
+  register: kubeadm_init_output
+
+- name: Generate join token
+  shell: kubeadm token create --print-join-command
+  register: kubeadm_join_cmd
+  when: ansible_hostname == 'master'
+
+- set_fact:
+    kubeadm_join: "{{ kubeadm_join_cmd.stdout }}"
+  when: ansible_hostname == 'master'
+
+- debug: var=kubeadm_join
+  when: ansible_hostname == 'master'
+
+- name: Get certificate key
+  shell: "grep '\\--certificate-key' cluster.txt |awk '{print $3}'"
+  register: cert_key_join
+  when: ansible_hostname == 'master'
+
+- set_fact:
+    cert_key_join: "{{ cert_key_join.stdout }}"
+  when: ansible_hostname == 'master'
+
+- debug: var=cert_key_join
+  when: ansible_hostname == 'master'
+
+- name: Store join command
+  action: copy content="{{ kubeadm_join }}" dest="/etc/kubernetes/kubeadm-join.command"
+  when: ansible_hostname == 'master'
+
+- name: create .kube directory
+  become: yes
+  file:
+    path: $HOME/.kube
+    state: directory
+    mode: 0755
+
+- name: copy admin.conf to user's kube config
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/.kube/config
+    remote_src: yes
+  when: ansible_hostname == 'master'
+
+- name: Sleep for 20 seconds
+  shell: sleep 20
+
+- name: Run kubeadm join on other node
+  shell: tail -n 2 cluster.txt > cluster-join.txt
+    #shell: "{{ kubeadm_init_output }} --certificate-key {{ cert_key_join }} --apiserver-advertise-address {{ hostvars[inventory_hostname]['ansible_' + keepalived.interface].ipv4.address }} --node-name {{ hostvars[inventory_hostname]['ansible_hostname'] }} --control-plane > /tmp/cluster_join.txt"
+  when: ansible_hostname == 'node01'
+  register: kubeadm_join
+
+- name: Kubeadm join output
+  debug:
+    var: kubeadm_join
+
+- name: copy admin.conf to user's kube config
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/.kube/config
+    remote_src: yes
+    owner: root
+  when: ansible_hostname == 'node01'
+
+
